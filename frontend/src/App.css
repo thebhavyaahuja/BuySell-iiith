@@ -1,0 +1,9 @@
+@import "tailwindcss";
+
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], input[type="tel"], input[type="url"], input[type="search"], input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"], input[type="week"], input[type="color"], input[type="file"], input[type="radio"], input[type="checkbox"], select, textarea {
+  @apply w-full p-2 border border-gray-300 rounded-xl shadow-md;
+}
+
+button[type="submit"], input[type="submit"] {
+  @apply bg-blue-900 text-white font-semibold py-2 px-4 rounded-xl;
+}
