@@ -44,9 +44,20 @@ app.post('/login', async (req, res) => {
         const { email, password } = req.body;
         const userDoc = await User.findOne({ email });
         if(userDoc && bcrypt.compareSync(password, userDoc.password)) {
-            const token = jwt.sign({id:userDoc._id,email:userDoc.email}, JWT_Secret, {}, (err,token)=>{
+            const token = jwt.sign({id:userDoc._id,email:userDoc.email, firstName:userDoc.firstName, lastName:userDoc.lastName}, JWT_Secret, {}, (err,token)=>{
                 if(err) throw err;
-                res.cookie('token',token).json('pass ok');
+                // res.cookie('token',token).json('pass ok');
+                return res.cookie('token',token).status(200).json({
+                    token, 
+                    user:{
+                        id: userDoc._id,
+                        email: userDoc.email,
+                        firstName: userDoc.firstName,
+                        lastName: userDoc.lastName,
+                        age: userDoc.age,
+                        contactNo: userDoc.contactNo
+                    }
+                })
             });
         } else{
             return res.status(400).json('Invalid credentials');
@@ -56,4 +67,14 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.listen(4000);
+app.put('/update-user', async (req, res) => {
+    try {
+        const { id, email, firstName, lastName, age, contactNo } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(id, { email, firstName, lastName, age, contactNo }, { new: true });
+        res.json({ user: updatedUser });
+    } catch (err) {
+        res.status(400).json({error:err.message});
+    }
+});
+
+app.listen(3000);
