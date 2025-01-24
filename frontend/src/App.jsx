@@ -5,7 +5,8 @@ import LoginPage from './pages/login.jsx';
 import RegisterPage from './pages/register.jsx';
 import axios from 'axios';
 
-axios.defaults.baseURL = 'http://127.0.0.1:4000';
+axios.defaults.baseURL = 'http://localhost:3000';
+axios.defaults.withCredentials = true;
 
 function App() {
   return (
