@@ -70,8 +70,8 @@ app.post('/login', async (req, res) => {
 app.put('/update-user', async (req, res) => {
     try {
         const { id, email, firstName, lastName, age, contactNo } = req.body;
-        const updatedUser = await User.findByIdAndUpdate(id, { email, firstName, lastName, age, contactNo }, { new: true });
-        res.json({ user: updatedUser });
+        const userDoc = await User.findByIdAndUpdate(id, { email, firstName, lastName, age, contactNo }, { new: true });
+        res.status(200).json(userDoc);
     } catch (err) {
         res.status(400).json({error:err.message});
     }
