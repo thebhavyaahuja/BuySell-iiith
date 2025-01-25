@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
 const User = require('./models/User');
+const Item = require('./models/Item');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');  
 
@@ -55,7 +56,8 @@ app.post('/login', async (req, res) => {
                         firstName: userDoc.firstName,
                         lastName: userDoc.lastName,
                         age: userDoc.age,
-                        contactNo: userDoc.contactNo
+                        contactNo: userDoc.contactNo,
+                        password: userDoc.password
                     }
                 })
             });
@@ -68,12 +70,58 @@ app.post('/login', async (req, res) => {
 });
 
 app.put('/update-user', async (req, res) => {
+    console.log('req.body', req.body);
     try {
-        const { id, email, firstName, lastName, age, contactNo } = req.body;
-        const userDoc = await User.findByIdAndUpdate(id, { email, firstName, lastName, age, contactNo }, { new: true });
+        const { id, email, firstName, lastName, age, contactNo, password } = req.body;
+        const userDoc = await User.findByIdAndUpdate(
+            id, 
+            { email, firstName, lastName, age, contactNo, password: bcrypt.hashSync(password, SecretStuff) }, 
+            { new: true }
+        );
+        console.log('password', password);
+        // console.log('password after hash', bcrypt.hashSync(password, SecretStuff));  
+        // userDoc will have _id by default
         res.status(200).json(userDoc);
     } catch (err) {
-        res.status(400).json({error:err.message});
+        res.status(400).json({ error: err.message });
+    }
+});
+
+app.post('/items/add',async (req, res) => {
+    try {
+        const { sellerEmail, sellerName, name, price, quantity, description } = req.body;
+        const itemDoc = await Item.create({
+            sellerEmail,
+            sellerName,
+            name,
+            price,
+            quantity,
+            description,
+        });
+        return res.status(201).json(itemDoc);
+    } catch (err) {
+        return res.status(400).json(err);
+    }
+});
+
+app.get('/my-items', async (req, res) => {
+    try {
+        const { email } = req.query; // Get the email from query parameters
+        const items = await Item.find({ sellerEmail: email });
+        return res.status(200).json(items);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/search', async (req, res) => {
+    try {
+        const { email } = req.query; // Get the email from query parameters
+        // if email matches, then dont show the item
+        const items = await Item.find({ sellerEmail: { $ne: email } });
+        return res.status(200).json(items);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
     }
 });
 
