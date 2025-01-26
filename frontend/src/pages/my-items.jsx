@@ -52,16 +52,15 @@ export default function MyItemsPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="border ml-10 h-6 border-gray-300 rounded-lg mr-2 p-2 w-64"
                 />
-                <button className="mr-30 text-sm shadow-lg bg-blue-900 text-white px-2 py-0.5 rounded-lg">
+                <button className="mr-30 text-sm shadow-lg bg-blue-900 text-white px-2 py-0.5 rounded-lg hover:bg-blue-800 transition duration-300">
                     Search
                 </button>
             </div>
             <div className="ml-20 mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {filteredItems.map(item => (
-                    <div key={item._id} className="mb-5 border border-gray-300 p-4 rounded-lg shadow-lg shadow-blue-950 w-60 h-45">
+                    <div key={item._id} className="mb-5 border border-gray-300 p-4 rounded-lg shadow-lg shadow-blue-950 w-60 h-45 hover:bg-blue-100 transition duration-300">
                         <h2 className="text-xl font-bold text-blue-950">{item.name}</h2>
-                        <p className="text-lg text-blue-950">Price: {item.price}</p>
-                        <p className="text-lg text-blue-950">Quantity: {item.quantity}</p>
+                        <p className="text-lg text-blue-950">Price: Rs. {item.price}</p>
                         <p className="text-lg text-blue-950">Description: {item.description}</p>
                     </div>
                 ))}

@@ -12,7 +12,6 @@ export default function AddItemPage() {
 
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
-    const [quantity, setQuantity] = useState('');
     const [description, setDescription] = useState('');
     // const [image, setImage] = useState(null);
 
@@ -26,20 +25,18 @@ export default function AddItemPage() {
             formData.append('sellerName', `${user?.firstName ?? ''} ${user?.lastName ?? ''}`);
             formData.append('name', name);
             formData.append('price', price);
-            formData.append('quantity', quantity);
             formData.append('description', description);
             // if (image) {
             //     formData.append('image', image);
               // }
             // console.log(formData);
-            console.log(user?.email, `${user?.firstName} ${user?.lastName}`, name, price, quantity, description);
+            console.log(user?.email, `${user?.firstName} ${user?.lastName}`, name, price, description);
             // POST request to add item
             await axios.post('/items/add', {
                 sellerEmail: user?.email,
                 sellerName: `${user?.firstName} ${user?.lastName}`,
                 name: name,
                 price: price,
-                quantity: quantity,
                 description: description
             },
             {
@@ -76,14 +73,6 @@ export default function AddItemPage() {
                         placeholder="Price"
                         value={price}
                         onChange={e => setPrice(e.target.value)}
-                        className="border border-gray-300 rounded p-2"
-                        required
-                    />
-                    <input
-                        type="number"
-                        placeholder="Quantity"
-                        value={quantity}
-                        onChange={e => setQuantity(e.target.value)}
                         className="border border-gray-300 rounded p-2"
                         required
                     />

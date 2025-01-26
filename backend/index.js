@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 const User = require('./models/User');
 const Item = require('./models/Item');
+const Cart = require('./models/Cart');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');  
 
@@ -89,13 +90,12 @@ app.put('/update-user', async (req, res) => {
 
 app.post('/items/add',async (req, res) => {
     try {
-        const { sellerEmail, sellerName, name, price, quantity, description } = req.body;
+        const { sellerEmail, sellerName, name, price, description } = req.body;
         const itemDoc = await Item.create({
             sellerEmail,
             sellerName,
             name,
             price,
-            quantity,
             description,
         });
         return res.status(201).json(itemDoc);
@@ -120,6 +120,57 @@ app.get('/search', async (req, res) => {
         // if email matches, then dont show the item
         const items = await Item.find({ sellerEmail: { $ne: email } });
         return res.status(200).json(items);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/items/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const item = await Item.findById(id);
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+        return res.status(200).json(item);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.post('/cart/add', async (req, res) => {
+    try {
+        const { itemId, name, userEmail, sellerEmail, price, sellerName, description } = req.body;
+        // Add item to cart
+        console.log('itemId', itemId);
+        // check if item already exists in cart
+        const itemInCart = await Cart.findOne({ itemId });
+        if (itemInCart) {
+            return res.status(400).json({ message: 'Item already in cart' });
+        }
+        const cartDoc = await Cart.create({ itemId, name, userEmail, price, sellerEmail, sellerName, description });
+        return res.status(201).json(cartDoc);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/my-cart', async (req, res) => {
+    try {
+        const { email } = req.query;
+        const items = await Cart.find({ userEmail: email });
+        return res.status(200).json(items);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.put('/cart/remove', async (req, res) => {
+    try {
+        const { itemId } = req.body;
+        console.log('itemId', itemId);
+        await Cart.deleteOne({ itemId });
+        return res.status(200).json({ message: 'Item removed from cart' });
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }

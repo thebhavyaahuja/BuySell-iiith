@@ -13,7 +13,7 @@ export default function Dashboard() {
         email: user?.email || '',
         age: user?.age || '',
         contactNo: user?.contactNo || '',
-        password: user?.password || '',
+        password: '',
     });
 
     const handleChange = (e) => {
@@ -111,6 +111,7 @@ export default function Dashboard() {
                                     type="text"
                                     name="password"
                                     value={formData.password}
+                                    placeholder='Enter new password'
                                     onChange={handleChange}
                                     className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
                                 />
@@ -149,12 +150,12 @@ export default function Dashboard() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
                                     </svg>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Password: {user.password}</p>
-                                    <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg>
-                                </div>
+                                <button
+                                    onClick={() => setEditMode(true)}
+                                    className="bg-blue-900 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-800 transition duration-300"
+                                >
+                                    Change Password
+                                </button>
                             </>
                         )}
                     </div>
