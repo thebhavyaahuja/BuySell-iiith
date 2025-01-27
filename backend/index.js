@@ -73,32 +73,69 @@ app.post('/login', async (req, res) => {
 });
 
 app.put('/update-user', async (req, res) => {
-    console.log('req.body', req.body);
     try {
-        const { id, email, firstName, lastName, age, contactNo, password } = req.body;
+        const {
+            id,
+            email,
+            firstName,
+            lastName,
+            age,
+            contactNo,
+            password // Only present if the user wants to update it
+        } = req.body;
+
+        // Build an object with only the fields we want to update
+        const updateFields = {
+            email,
+            firstName,
+            lastName,
+            age,
+            contactNo
+        };
+
+        // Only hash and update password if it's provided and non-empty
+        if (password && password.trim() !== '') {
+            updateFields.password = bcrypt.hashSync(password, SecretStuff);
+        }
+
+        const userDoc = await User.findByIdAndUpdate(id, updateFields, { new: true });
+        return res.status(200).json(userDoc);
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+});
+
+app.put('/change-password', async (req, res) => {
+    try {
+        const { id, newPassword } = req.body;
+        if (!id || !newPassword) {
+            return res.status(400).json({ error: 'ID and newPassword are required.' });
+        }
+
+        const hashedPassword = bcrypt.hashSync(newPassword, SecretStuff);
+
         const userDoc = await User.findByIdAndUpdate(
             id,
-            { email, firstName, lastName, age, contactNo, password: bcrypt.hashSync(password, SecretStuff) },
+            { password: hashedPassword },
             { new: true }
         );
-        console.log('password', password);
-        // console.log('password after hash', bcrypt.hashSync(password, SecretStuff));  
-        // userDoc will have _id by default
-        res.status(200).json(userDoc);
+
+        return res.status(200).json(userDoc);
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        return res.status(400).json({ error: err.message });
     }
 });
 
 app.post('/items/add', async (req, res) => {
     try {
-        const { sellerEmail, sellerName, name, price, description } = req.body;
+        const { sellerEmail, sellerName, name, price, description, category } = req.body;
         const itemDoc = await Item.create({
             sellerEmail,
             sellerName,
             name,
             price,
             description,
+            category
         });
         return res.status(201).json(itemDoc);
     } catch (err) {
@@ -220,10 +257,19 @@ app.post('/orders/checkout', async (req, res) => {
 
 app.get('/orders/history', async (req, res) => {
     try {
-        const { email } = req.query;
-        const orders = await Order.find({ userEmail: email }).sort({ createdAt: -1 });
+        console.log('req.query', req.query);
+        const { email, mode } = req.query;
+        if(mode === 'pending') {
+            query={ userEmail: email, status: 'Pending' };
+        } else if (mode === 'Bought') {
+            query={ userEmail: email, status: 'Delivered' };
+        } else if (mode === 'Sold') {
+            query={ sellerEmail: email, status: 'Delivered' };
+        }
+        const orders = await Order.find(query).sort({ createdAt: -1 });
         return res.status(200).json(orders);
     } catch (err) {
+        console.log(err);   
         return res.status(400).json({ message: err.message });
     }
 });

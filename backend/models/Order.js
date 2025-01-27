@@ -8,7 +8,8 @@ const orderSchema = new mongoose.Schema({
     sellerName: { type: String, required: false },
     sellerEmail: { type: String, required: false },
     status: { type: String, default: 'Pending' },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    category: { type: String, required: true }, 
 });
 
 module.exports = mongoose.model('Order', orderSchema);
