@@ -56,14 +56,14 @@ export default function SearchPage() {
             </div>
             <div className="ml-20 mb-15 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                 {filteredItems.map(item => (
+                    <Link to={`/search/item/${item._id}`}>
                     <div key={item._id} className="mb-10 border border-gray-300 p-4 rounded-lg shadow-lg shadow-blue-950 w-60 h-45 hover:bg-blue-100 transition duration-300">
-                        <Link to={`/search/item/${item._id}`}>
                             <h2 className="text-xl font-bold text-blue-950">{item.name}</h2>
                             <p className="text-lg text-blue-950">Price: {item.price}</p>
                             <p className="text-lg text-blue-950">Description: {item.description}</p>
                             <p className="text-lg text-blue-950 mb-1">Vendor: {item.sellerName}</p>
-                        </Link>
                     </div>
+                    </Link>
                 ))}
             </div>
         </>

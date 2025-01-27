@@ -6,8 +6,10 @@ require('dotenv').config();
 const User = require('./models/User');
 const Item = require('./models/Item');
 const Cart = require('./models/Cart');
+const OrderOTP = require('./models/OrderOTP');
+const Order = require('./models/Order');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');  
+const jwt = require('jsonwebtoken');
 
 const SecretStuff = bcrypt.genSaltSync(10);
 const JWT_Secret = process.env.JWT_SECRET || 'your_jwt_secret';
@@ -45,13 +47,13 @@ app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         const userDoc = await User.findOne({ email });
-        if(userDoc && bcrypt.compareSync(password, userDoc.password)) {
-            const token = jwt.sign({id:userDoc._id,email:userDoc.email, firstName:userDoc.firstName, lastName:userDoc.lastName}, JWT_Secret, {}, (err,token)=>{
-                if(err) throw err;
+        if (userDoc && bcrypt.compareSync(password, userDoc.password)) {
+            const token = jwt.sign({ id: userDoc._id, email: userDoc.email, firstName: userDoc.firstName, lastName: userDoc.lastName }, JWT_Secret, {}, (err, token) => {
+                if (err) throw err;
                 // res.cookie('token',token).json('pass ok');
-                return res.cookie('token',token).status(200).json({
-                    token, 
-                    user:{
+                return res.cookie('token', token).status(200).json({
+                    token,
+                    user: {
                         id: userDoc._id,
                         email: userDoc.email,
                         firstName: userDoc.firstName,
@@ -62,7 +64,7 @@ app.post('/login', async (req, res) => {
                     }
                 })
             });
-        } else{
+        } else {
             return res.status(400).json('Invalid credentials');
         }
     } catch (err) {
@@ -75,8 +77,8 @@ app.put('/update-user', async (req, res) => {
     try {
         const { id, email, firstName, lastName, age, contactNo, password } = req.body;
         const userDoc = await User.findByIdAndUpdate(
-            id, 
-            { email, firstName, lastName, age, contactNo, password: bcrypt.hashSync(password, SecretStuff) }, 
+            id,
+            { email, firstName, lastName, age, contactNo, password: bcrypt.hashSync(password, SecretStuff) },
             { new: true }
         );
         console.log('password', password);
@@ -88,7 +90,7 @@ app.put('/update-user', async (req, res) => {
     }
 });
 
-app.post('/items/add',async (req, res) => {
+app.post('/items/add', async (req, res) => {
     try {
         const { sellerEmail, sellerName, name, price, description } = req.body;
         const itemDoc = await Item.create({
@@ -171,6 +173,147 @@ app.put('/cart/remove', async (req, res) => {
         console.log('itemId', itemId);
         await Cart.deleteOne({ itemId });
         return res.status(200).json({ message: 'Item removed from cart' });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+function generateOTP() {
+    return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
+app.post('/orders/checkout', async (req, res) => {
+    try {
+        const { userEmail } = req.body;
+        // Find all cart items for this user
+        const cartItems = await Cart.find({ userEmail });
+        if (!cartItems || cartItems.length === 0) {
+            return res.status(400).json({ message: 'Cart is empty' });
+        }
+
+        const createdOrders = [];
+
+        // Loop through the cart items and create an Order document per item
+        for (const item of cartItems) {
+            const newOrder = await Order.create({
+                userEmail,
+                itemId: item.itemId,
+                name: item.name,
+                price: item.price,
+                sellerName: item.sellerName,
+                sellerEmail: item.sellerEmail
+            });
+            createdOrders.push(newOrder);
+        }
+
+        // Clear user cart
+        await Cart.deleteMany({ userEmail });
+
+        return res.status(201).json({
+            message: 'Orders created successfully!',
+            orders: createdOrders
+        });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/orders/history', async (req, res) => {
+    try {
+        const { email } = req.query;
+        const orders = await Order.find({ userEmail: email }).sort({ createdAt: -1 });
+        return res.status(200).json(orders);
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.post('/orders/generate-otp', async (req, res) => {
+    try {
+        const { buyerEmail,sellerEmail, orderId } = req.body;
+        const plainOTP = generateOTP();
+        console.log('plainOTP', plainOTP);
+
+        // Create or update OTP entry (one per order)
+        let otpDoc = await OrderOTP.findOne({ orderId, buyerEmail });
+        if (!otpDoc) {
+            otpDoc = new OrderOTP({
+                orderId,
+                buyerEmail,
+                sellerEmail,
+                hashedOTP: bcrypt.hashSync(plainOTP, SecretStuff),
+            });
+        } else {
+            otpDoc.hashedOTP = bcrypt.hashSync(plainOTP, SecretStuff);
+        }
+        await otpDoc.save();
+        console.log('otpDoc', otpDoc);
+
+        // Return plain OTP to user, DB stores only hashed
+        return res.status(201).json({ otp: plainOTP });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/orders/deliveries', async (req, res) => {
+    try {
+        console.log('req.query', req.query);
+        const { email } = req.query;
+        // Find all orders where the sellerEmail is this user (the seller)
+        // and the order status is still "Pending"
+        const orders = await Order.find({
+            sellerEmail: email,
+            status: 'Pending'
+        }).sort({ createdAt: -1 });
+
+        return res.status(200).json(orders);
+    } catch (err) {
+        console.error(err);
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.post('/orders/complete-delivery', async (req, res) => {
+    try {
+        console.log('SELLER', req.body);
+        const { sellerEmail,buyerEmail, orderId, otp } = req.body;
+
+        // Find the corresponding OrderOTP entry
+        const otpDoc = await OrderOTP.findOne({
+            orderId,
+            sellerEmail,
+            buyerEmail
+        });
+        console.log('otpDoc', otpDoc);
+
+        if (!otpDoc) {
+            return res.status(400).json({ message: 'Buyer didn\'t generate an OTP for this order yet' });
+        }
+
+        // Compare the provided OTP with the hashed OTP
+        const isMatch = await bcrypt.compare(otp, otpDoc.hashedOTP);
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid OTP' });
+        }
+
+        // Optionally delete the OTP doc so it can't be reused
+        await OrderOTP.findByIdAndDelete(otpDoc._id);
+
+        return res.status(200).json({
+            message: 'Delivery completed successfully',
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.put('/orders/mark-delivered', async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        await Order.findByIdAndUpdate(orderId, { status: 'Delivered' });
+        return res.status(200).json({ message: 'Order marked as delivered' });  
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }

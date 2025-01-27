@@ -13,6 +13,21 @@ export default function CartPage() {
     const [searchTerm, setSearchTerm] = useState('');
 
     // console.log('user', user);
+    async function handlePlaceOrder() {
+        try {
+            const res = await axios.post('/orders/checkout', { userEmail: user.email });
+            // console.log(res.data);
+            alert('Order placed successfully!');
+            setItems([]); // Clear the cart in frontend
+            navigate('/history');
+        } catch (err) {
+            console.error(err);
+            if(err.response.data.message === 'Cart is empty') {
+                alert('Cannot place order with empty cart!');
+            }
+            alert('Failed to place order!');
+        }
+    }
 
     const handleRemoveFromCart = async (item) => {
         console.log(item);
@@ -82,7 +97,15 @@ export default function CartPage() {
                     </div>
                 ))}
             </div>
-            <div className="px-3 py-2 mb-10 mr-15 fixed bottom-4 right-4 bg-blue-900 text-white rounded-full shadow-md shadow-blue-950">
+            <div className="px-25 py-10 fixed bottom-4 right-90">
+                <button
+                    onClick={handlePlaceOrder}
+                    className="text-lg bg-blue-900 text-white px-8 py-3 rounded-md shadow-lg hover:bg-blue-800 transition duration-300"
+                >
+                    Place Order
+                </button>
+            </div>
+            <div className="px-3 py-2 mb-10 mr-15 fixed bottom-4 right-4 bg-blue-950 text-white rounded-full shadow-md shadow-blue-950">
                 Cart Value : Rs. {items.reduce((acc, item) => acc + item.price, 0)}
             </div>
         </>
