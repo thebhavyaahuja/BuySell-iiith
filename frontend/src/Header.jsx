@@ -32,6 +32,13 @@ export default function Header(){
                     <Link to={MyItemsLink} className="text-blue-950 mr-6" onClick={handleThis}>My Items</Link>
                     <Link to={dashboardLink} className="text-blue-950 mr-3" onClick={handleThis}>Dashboard</Link>
                 </nav>
+                <div className="ml-auto text-white bg-blue-950 px-4 py-2 rounded-full shadow-md shadow-gray-500">
+                    {user ? (
+                        <Link to="/dashboard">{user.firstName}</Link>
+                    ) : (
+                        <Link to="/login">Login</Link>
+                    )}
+                </div>
             </header>
             <main className="p-4">
             </main>
