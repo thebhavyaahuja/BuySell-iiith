@@ -30,7 +30,7 @@ export default function ItemPage() {
         console.log(item);
         console.log(user);
         try {
-            await axios.post("/cart/add", { itemId: item._id, name: item.name, userEmail: user.email, price: item.price, sellerName: item.sellerName, sellerEmail: item.sellerEmail, description: item.description });
+            await axios.post("/cart/add", { itemId: item._id, name: item.name, userEmail: user.email, price: item.price, sellerName: item.sellerName, sellerEmail: item.sellerEmail, description: item.description, category:item.category });
             alert("Item added to cart!");
         } catch (err) {
             console.error(err);
@@ -47,10 +47,11 @@ export default function ItemPage() {
                 <h1 className="text-3xl font-bold text-blue-900 mb-4 ml-10">{item.name}</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ml-10">
                     <div>
-                        <p className="text-lg text-gray-700 mb-2"><span className="font-semibold">Vendor:</span> {item.sellerName}</p>
-                        <p className="text-lg text-gray-700 mb-2"><span className="font-semibold">Vendor Email:</span> {item.sellerEmail}</p>
-                        <p className="text-lg text-gray-700 mb-2"><span className="font-semibold">Price:</span> Rs. {item.price}</p>
-                        <p className="text-lg text-gray-700 mb-2"><span className="font-semibold">Description:</span> {item.description}</p>
+                    <p className="text-lg flex flex-row"><div className="mr-30">Price:</div> <div className=" text-blue-900 font-semibold">Rs. {item.price}</div></p>
+                            <p className="text-lg flex flex-row"><div className="mr-22">Category:</div> <div className="text-blue-900 font-semibold">{item.category}</div></p>
+                            <p className="text-lg flex flex-row"><div className="mr-17">Description:</div> <div className="text-blue-900 font-semibold">{item.description}</div></p>
+                            <p className="text-lg mb-1 flex flex-row"><div className="mr-26">Vendor:</div> <div className="text-blue-900 font-semibold"> {item.sellerName}</div></p>
+                            <p className="text-lg mb-1 flex flex-row"><div className="mr-14">Vendor Email:</div> <div className="text-blue-900 font-semibold"> {item.sellerEmail}</div></p>
                     </div>
                     <div className="flex justify-center items-center">
                         <button

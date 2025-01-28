@@ -13,8 +13,6 @@ export default function MyItemsPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const AddItemsLink = user ? '/my-items/add-item' : '/login';
 
-    // console.log('user', user);
-
     useEffect(() => {
         if (!user) {
             navigate('/login');
@@ -41,8 +39,8 @@ export default function MyItemsPage() {
     return (
         <>
             <Header />
-            <div className="flex items-center p-4">
-                <h1 className="ml-40 mr-10 w-200 text-2xl text-blue-950 font-bold">
+            <div className="flex items-center p-6 bg-gray-100">
+                <h1 className="ml-40 mr-10 w-200 text-3xl text-blue-900 font-bold">
                     Your Items
                 </h1>
                 <input
@@ -50,25 +48,26 @@ export default function MyItemsPage() {
                     placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border ml-10 h-6 border-gray-300 rounded-lg mr-2 p-2 w-64"
+                    className="border ml-10 h-10 border-gray-300 rounded-lg mr-2 p-2 w-64"
                 />
-                <button className="mr-30 text-sm shadow-lg bg-blue-900 text-white px-2 py-0.5 rounded-lg hover:bg-blue-800 transition duration-300">
+                <button className="text-sm shadow-lg bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-800 transition duration-300">
                     Search
                 </button>
             </div>
-            <div className="ml-20 mb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+            <div className="ml-20 mb-15 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
                 {filteredItems.map(item => (
-                    <div key={item._id} className="mb-5 border border-gray-300 p-4 rounded-lg shadow-lg shadow-blue-950 w-60 h-45 hover:bg-blue-100 transition duration-300">
-                        <h2 className="text-xl font-bold text-blue-950">{item.name}</h2>
-                        <p className="text-lg text-blue-950">Price: Rs. {item.price}</p>
-                        <p className="text-lg text-blue-950">Description: {item.description}</p>
+                    <div key={item._id} className="mb-10 border border-gray-300 p-6 rounded-lg shadow-md shadow-gray-600 hover:bg-blue-100 transition duration-300 cursor-pointer">
+                        <h2 className="text-xl font-bold text-blue-900">{item.name}</h2>
+                        <p className="text-lg flex flex-row"><div className="mr-17">Price:</div> <div className=" text-blue-900 font-semibold">Rs. {item.price}</div></p>
+                        <p className="text-lg flex flex-row"><div className="mr-9">Category:</div> <div className="text-blue-900 font-semibold">{item.category}</div></p>
+                        <p className="text-lg flex flex-row"><div className="mr-4">Description:</div> <div className="text-blue-900 font-semibold">{item.description}</div></p>
                     </div>
                 ))}
             </div>
-            <div className="px-25 py-10 fixed bottom-4 right-4">
+            <div className="fixed bottom-14 right-10">
                 <Link
                     to={AddItemsLink}
-                    className="bg-blue-900 text-white px-4 py-2 rounded-full shadow-lg"
+                    className="bg-blue-900 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-800 transition duration-300"
                 >
                     Add Items
                 </Link>

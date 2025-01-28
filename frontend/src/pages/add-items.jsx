@@ -13,52 +13,39 @@ export default function AddItemPage() {
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
     const [description, setDescription] = useState('');
-    // const [image, setImage] = useState(null);
+    const [category, setCategory] = useState(''); // Added category state
 
     async function handleSubmit(e) {
         console.log(user);
         e.preventDefault();
         try {
-            // Construct form data (or just use JSON for non-file uploads)
-            const formData = new FormData();
-            formData.append('sellerEmail', user?.email || '');
-            formData.append('sellerName', `${user?.firstName ?? ''} ${user?.lastName ?? ''}`);
-            formData.append('name', name);
-            formData.append('price', price);
-            formData.append('description', description);
-            // if (image) {
-            //     formData.append('image', image);
-              // }
-            // console.log(formData);
-            console.log(user?.email, `${user?.firstName} ${user?.lastName}`, name, price, description);
             // POST request to add item
             await axios.post('/items/add', {
                 sellerEmail: user?.email,
                 sellerName: `${user?.firstName} ${user?.lastName}`,
                 name: name,
                 price: price,
-                description: description
+                description: description,
+                category: category // Include category in the request
             },
             {
                 headers: {
                     'Content-Type': 'application/json'
                 }
-            }
-            );
-
+            });
             alert('Item added successfully!');
-            navigate('/search');
+            navigate('/my-items');
         } catch (err) {
             console.error(err);
             alert('Failed to add item!');
         }
     }
 
-    return(
+    return (
         <>
-            <Header/>
+            <Header />
             <div className="p-4 space-y-4 ml-90">
-                <h1 className="text-2xl text-blue-950 font-bold mb-4 ml-25  ">Add Item</h1>
+                <h1 className="text-2xl text-blue-950 font-bold mb-4 ml-25">Add Item</h1>
                 <form onSubmit={handleSubmit} className="flex flex-col w-80 space-y-3">
                     <input
                         type="text"
@@ -84,15 +71,30 @@ export default function AddItemPage() {
                         rows={3}
                         required
                     />
-                    {/* For images (optional) */}
-                    {/* <input
-                        type="file"
-                        onChange={e => setImage(e.target.files[0])}
+                    <select
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
                         className="border border-gray-300 rounded p-2"
-                    /> */}
+                        required
+                    >
+                        <option value="" disabled>Select Category</option>
+                        <option value="electronics">Electronics</option>
+                        <option value="fashion">Fashion</option>
+                        <option value="toys">Toys</option>
+                        <option value="digital services">Digital Services</option>
+                        <option value="cosmetics and body care">Cosmetics and Body Care</option>
+                        <option value="food and beverage">Food and Beverage</option>
+                        <option value="furniture and decor">Furniture and Decor</option>
+                        <option value="health and wellness">Health and Wellness</option>
+                        <option value="household items">Household Items</option>
+                        <option value="media">Media</option>
+                        <option value="pet care">Pet Care</option>
+                        <option value="office equipment">Office Equipment</option>
+                        <option value="other">Other</option>
+                    </select>
                     <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">Add Item</button>
                 </form>
             </div>
         </>
-    )
-}
+    );
+}   

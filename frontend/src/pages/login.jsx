@@ -4,15 +4,18 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { UserContext } from '../UserContext.jsx';
 import { useContext } from 'react'; 
+import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [redirect, setRedirect] = useState(false);
     const { setUser } = useContext(UserContext);
+    const [recaptchaToken, setRecaptchaToken] = useState('');
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        
         try{
             const { data } = await axios.post('/login', {email, password});  
             setUser(data.user);
@@ -25,8 +28,12 @@ export default function LoginPage() {
         }
     } 
 
+    // const onRecaptchaChange = (token) => {
+    //     setRecaptchaToken(token);
+    // };
+
     if(redirect){
-        return <Navigate to={'/dashboard'} />
+        return <Navigate to={'/search'} />
     }
 
     return (
@@ -38,6 +45,7 @@ export default function LoginPage() {
                     <form className="flex flex-col space-y-3" onSubmit={handleSubmit}>
                         <input type="email" placeholder="Email" value={email} onChange={event=>setEmail(event.target.value)} />
                         <input type="password" placeholder="Password" value={password} onChange={event=>setPassword(event.target.value)}/>
+                        {/* <ReCAPTCHA sitekey="6LdaesUqAAAAAOaFBe6APsTSAvc2acFv2sOvQcrg" onChange={onRecaptchaChange} /> */}
                         <button type="submit">Login</button>
                     </form>
                     <div className="text-center text-sm py-2">

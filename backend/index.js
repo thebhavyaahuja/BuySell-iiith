@@ -10,6 +10,7 @@ const OrderOTP = require('./models/OrderOTP');
 const Order = require('./models/Order');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const router = express.Router();
 
 const SecretStuff = bcrypt.genSaltSync(10);
 const JWT_Secret = process.env.JWT_SECRET || 'your_jwt_secret';
@@ -46,6 +47,23 @@ app.post('/register', async (req, res) => {
 app.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log('req.body', req.body);
+
+        // // Verifying the captcha token
+        // const SECRET_KEY = "6LdaesUqAAAAAM3HA0RHfRxZ1MzP7kDx7oeuLP-V";
+        // console.log('captchaToken', captchaToken);
+        // console.log('SECRET_KEY', SECRET_KEY);
+        // const captchaRes = await axios.post(
+        //     `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`, 
+        //     {},
+        //     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        // );
+        // console.log('captchaRes', captchaRes.data);
+        // if (!captchaRes.data.success) {
+        //     return res.status(400).json({ error: 'Captcha verification failed' });
+        // }
+
+
         const userDoc = await User.findOne({ email });
         if (userDoc && bcrypt.compareSync(password, userDoc.password)) {
             const token = jwt.sign({ id: userDoc._id, email: userDoc.email, firstName: userDoc.firstName, lastName: userDoc.lastName }, JWT_Secret, {}, (err, token) => {
@@ -179,7 +197,7 @@ app.get('/items/:id', async (req, res) => {
 
 app.post('/cart/add', async (req, res) => {
     try {
-        const { itemId, name, userEmail, sellerEmail, price, sellerName, description } = req.body;
+        const { itemId, name, userEmail, sellerEmail, price, sellerName, description, category } = req.body;
         // Add item to cart
         console.log('itemId', itemId);
         // check if item already exists in cart
@@ -187,7 +205,7 @@ app.post('/cart/add', async (req, res) => {
         if (itemInCart) {
             return res.status(400).json({ message: 'Item already in cart' });
         }
-        const cartDoc = await Cart.create({ itemId, name, userEmail, price, sellerEmail, sellerName, description });
+        const cartDoc = await Cart.create({ itemId, name, userEmail, price, sellerEmail, sellerName, description, category });
         return res.status(201).json(cartDoc);
     } catch (err) {
         return res.status(400).json({ message: err.message });
@@ -238,7 +256,8 @@ app.post('/orders/checkout', async (req, res) => {
                 name: item.name,
                 price: item.price,
                 sellerName: item.sellerName,
-                sellerEmail: item.sellerEmail
+                sellerEmail: item.sellerEmail,
+                category: item.category,
             });
             createdOrders.push(newOrder);
         }
@@ -259,24 +278,24 @@ app.get('/orders/history', async (req, res) => {
     try {
         console.log('req.query', req.query);
         const { email, mode } = req.query;
-        if(mode === 'pending') {
-            query={ userEmail: email, status: 'Pending' };
+        if (mode === 'pending') {
+            query = { userEmail: email, status: 'Pending' };
         } else if (mode === 'Bought') {
-            query={ userEmail: email, status: 'Delivered' };
+            query = { userEmail: email, status: 'Delivered' };
         } else if (mode === 'Sold') {
-            query={ sellerEmail: email, status: 'Delivered' };
+            query = { sellerEmail: email, status: 'Delivered' };
         }
         const orders = await Order.find(query).sort({ createdAt: -1 });
         return res.status(200).json(orders);
     } catch (err) {
-        console.log(err);   
+        console.log(err);
         return res.status(400).json({ message: err.message });
     }
 });
 
 app.post('/orders/generate-otp', async (req, res) => {
     try {
-        const { buyerEmail,sellerEmail, orderId } = req.body;
+        const { buyerEmail, sellerEmail, orderId } = req.body;
         const plainOTP = generateOTP();
         console.log('plainOTP', plainOTP);
 
@@ -323,7 +342,7 @@ app.get('/orders/deliveries', async (req, res) => {
 app.post('/orders/complete-delivery', async (req, res) => {
     try {
         console.log('SELLER', req.body);
-        const { sellerEmail,buyerEmail, orderId, otp } = req.body;
+        const { sellerEmail, buyerEmail, orderId, otp } = req.body;
 
         // Find the corresponding OrderOTP entry
         const otpDoc = await OrderOTP.findOne({
@@ -359,10 +378,34 @@ app.put('/orders/mark-delivered', async (req, res) => {
     try {
         const { orderId } = req.body;
         await Order.findByIdAndUpdate(orderId, { status: 'Delivered' });
-        return res.status(200).json({ message: 'Order marked as delivered' });  
+        return res.status(200).json({ message: 'Order marked as delivered' });
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }
 });
+
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+app.post('/chatbot', async (req, res) => {
+    try{
+        // console.log('req.body', req.body);
+        const genAI = new GoogleGenerativeAI("AIzaSyDAiq7Kj6LHr3vrYS7AAt3_MxI5e1JxHTY");
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const { messages } = req.body;
+        const prompt = messages.map(msg => `${msg.role}: ${msg.content}`).join("\n");
+
+        const result = await model.generateContent(prompt);
+        // console.log(result.response.text());
+        return res.status(200).json({ reply: result.response.text() });
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({ message: err.message });
+    }
+}); 
+
+app.post('/logout', (req, res) => {
+    res.clearCookie('token').json('Logged out');
+});
+
 
 app.listen(3000);

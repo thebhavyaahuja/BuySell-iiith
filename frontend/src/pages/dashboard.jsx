@@ -2,46 +2,42 @@ import Header from "../Header.jsx";
 import { useContext, useState } from 'react';
 import { UserContext } from '../UserContext.jsx';
 import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Dashboard() {
     const { user, setUser } = useContext(UserContext);
-    console.log('user', user);
+    const navigate = useNavigate();
     const [editMode, setEditMode] = useState(false);
+    const [passwordMode, setPasswordMode] = useState(false);
+
     const [formData, setFormData] = useState({
         firstName: user?.firstName || '',
         lastName: user?.lastName || '',
         email: user?.email || '',
         age: user?.age || '',
         contactNo: user?.contactNo || '',
-        password: '',
     });
 
+    // Local state for the new password when changing
+    const [newPassword, setNewPassword] = useState('');
+
+    // Handle text inputs for general profile data
     const handleChange = (e) => {
-        console.log('e.target.name', e.target.name);
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData({...formData, [e.target.name]: e.target.value });
     };
 
+    // Handle profile updates (excluding password)
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('formData', formData);
-
-        // if (!user || !user._id) {
-        //     console.error('No user._id found. Cannot update.');
-        // }
-        // if( user.id){
-        //     console.log('user.id',user.id);
-        // }
-
         try {
             const { data } = await axios.put('/update-user', {
                 id: user.id,
-                ...formData 
+                ...formData
             });
             setUser({
                 ...data,
-                id:data._id
-            })
-            console.log(data);
+                id: data._id
+            });
             setEditMode(false);
             alert('User information updated successfully!');
         } catch (err) {
@@ -50,112 +46,182 @@ export default function Dashboard() {
         }
     };
 
+    // Handle password changes via separate endpoint
+    const changePassword = async () => {
+        try {
+            await axios.put('/change-password', {
+                id: user.id,
+                newPassword
+            });
+            alert('Password changed successfully!');
+            setPasswordMode(false);
+            setNewPassword('');
+        } catch (err) {
+            console.error(err);
+            alert('Failed to change password!');
+        }
+    };
+
+    // Logout function
+    const logout = async () => {
+        try {
+            await axios.post('/logout');
+            setUser(null);
+            alert('Logged out successfully!');
+            navigate('/login')
+        } catch (err) {
+            console.error(err);
+            alert('Failed to logout!');
+        }
+    }
 
     return (
         <>
             <Header />
-            <div className="flex flex-col mt-10 items-center h-screen">
-                <h1 className="text-2xl text-blue-950 font-bold">Welcome to the Dashboard</h1>
+            <div className="flex flex-col mt-4 items-center h-screen">
+                <h1 className="text-3xl text-blue-900 font-bold mb-6">Welcome to the Dashboard</h1>
                 {user && (
-                    <div className="mt-4 flex flex-col items-center space-y-4">
+                    <div className="mt-2 flex flex-col items-center space-y-3 w-full max-w-sm">
                         {editMode ? (
-                            <form onSubmit={handleSubmit} className="flex flex-col space-y-3">
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Email: {user.email}</p>
-                                    {/* <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg> */}
+                            <form onSubmit={handleSubmit} className="flex flex-col space-y-4 w-full">
+                                {/* Email (read-only example) */}
+                                <div className="flex flex-col space-y-2">
+                                    <label className="font-semibold">Email</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.email}</p>
                                 </div>
-                                <div className="flex items-center space-x-2">
+
+                                {/* First Name */}
+                                <div className="flex flex-col space-y-2">
+                                    <label className="font-semibold">First Name</label>
                                     <input
                                         type="text"
                                         name="firstName"
                                         value={formData.firstName}
                                         onChange={handleChange}
-                                        className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
+                                        className="bg-gray-200 px-3 py-2 rounded-lg shadow-md"
                                     />
-                                    <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded-lg shadow-md">Save</button>
                                 </div>
-                                <div className="flex items-center space-x-2">
+
+                                {/* Last Name */}
+                                <div className="flex flex-col space-y-2">
+                                    <label className="font-semibold">Last Name</label>
                                     <input
                                         type="text"
                                         name="lastName"
                                         value={formData.lastName}
                                         onChange={handleChange}
-                                        className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
+                                        className="bg-gray-200 px-3 py-2 rounded-lg shadow-md"
                                     />
-                                    <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded-lg shadow-md">Save</button>
                                 </div>
-                                <div className="flex items-center space-x-2">
+
+                                {/* Age */}
+                                <div className="flex flex-col space-y-2">
+                                    <label className="font-semibold">Age</label>
                                     <input
                                         type="number"
                                         name="age"
                                         value={formData.age}
                                         onChange={handleChange}
-                                        className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
+                                        className="bg-gray-200 px-3 py-2 rounded-lg shadow-md"
                                     />
-                                    <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded-lg shadow-md">Save</button>
                                 </div>
-                                <div className="flex items-center space-x-2">
+
+                                {/* Contact No */}
+                                <div className="flex flex-col space-y-2">
+                                    <label className="font-semibold">Contact No</label>
                                     <input
                                         type="number"
                                         name="contactNo"
                                         value={formData.contactNo}
                                         onChange={handleChange}
-                                        className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
+                                        className="bg-gray-200 px-3 py-2 rounded-lg shadow-md"
                                     />
-                                    <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded-lg shadow-md">Save</button>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                <input
-                                    type="text"
-                                    name="password"
-                                    value={formData.password}
-                                    placeholder='Enter new password'
-                                    onChange={handleChange}
-                                    className="bg-gray-200 px-3 py-1 rounded-lg shadow-md"
-                                />
-                                <button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded-lg shadow-md">Save</button>
-                                </div>
+
+                                {/* Save changes to user profile */}
+                                <button
+                                    type="submit"
+                                    className="bg-blue-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition duration-300"
+                                >
+                                    Save
+                                </button>
+
+                                {/* Show password mode button */}
+                                {!passwordMode && (
+                                    <button
+                                        onClick={() => setPasswordMode(true)}
+                                        type="button"
+                                        className="mb-10 rounded-lg bg-blue-900 text-white px-4 py-2 shadow-md hover:bg-blue-800 transition duration-300"
+                                    >
+                                        Change Password
+                                    </button>
+                                )}
+
+                                {/* If password mode is set, show new password input */}
+                                {passwordMode && (
+                                    <div className="flex flex-col space-y-2">
+                                        <label className="font-semibold">New Password</label>
+                                        <div className="flex justify-between items-center">
+                                            <input
+                                                type="password"
+                                                value={newPassword}
+                                                placeholder="Enter new password"
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="bg-gray-200 px-3 py-2 rounded-lg shadow-md"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setPasswordMode(false);
+                                                    setNewPassword('');
+                                                }}
+                                                className="bg-red-700 text-white px-2 py-2 m-2 rounded-lg shadow-md hover:bg-red-800 transition duration-300"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={changePassword}
+                                                className="bg-blue-800 text-sm text-white px-2 py-1 shadow-md rounded-lg hover:bg-blue-800 transition duration-300"
+                                            >
+                                                Save Password
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </form>
                         ) : (
+                            // Read-only view if not in edit mode
                             <>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Email: {user.email}</p>
-                                    {/* <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg> */}
+                                <div className="flex flex-col space-y-2 w-full">
+                                    <label className="font-semibold">Email</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.email}</p>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>First Name: {user.firstName}</p>
-                                    <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg>
+                                <div className="flex flex-col space-y-2 w-full">
+                                    <label className="font-semibold">First Name</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.firstName}</p>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Last Name: {user.lastName}</p>
-                                    <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg>
+                                <div className="flex flex-col space-y-2 w-full">
+                                    <label className="font-semibold">Last Name</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.lastName}</p>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Age: {user.age}</p>
-                                    <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg>
+                                <div className="flex flex-col space-y-2 w-full">
+                                    <label className="font-semibold">Age</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.age}</p>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <p className='bg-gray-200 px-3 py-1 rounded-lg shadow-md'>Contact No: {user.contactNo}</p>
-                                    <svg onClick={() => setEditMode(true)} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.4} stroke="currentColor" className="size-4 mt-1 cursor-pointer hover:text-blue-500">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.4 4.4 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.4 4.4 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.4 2.125" />
-                                    </svg>
+                                <div className="flex flex-col space-y-2 w-full">
+                                    <label className="font-semibold">Contact No</label>
+                                    <p className="bg-gray-200 px-3 py-2 rounded-lg shadow-md">{user.contactNo}</p>
                                 </div>
-                                <button
-                                    onClick={() => setEditMode(true)}
-                                    className="bg-blue-900 text-white px-6 py-3 rounded-lg shadow-lg hover:bg-blue-800 transition duration-300"
-                                >
-                                    Change Password
-                                </button>
+                                <div className="flex flex-row mt-2 justify-center space-x-2 w-full">
+                                    <button
+                                        onClick={() => setEditMode(true)}
+                                        className="bg-blue-900 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-800 transition duration-300"
+                                    >
+                                        Edit Profile
+                                    </button>
+                                    <button onClick={logout} className="bg-red-600 text-white py-2 px-5 shadow-lg -gray-200 rounded-lg hover:bg-red-500 transition duration-300">Logout</button>
+                                </div>
                             </>
                         )}
                     </div>

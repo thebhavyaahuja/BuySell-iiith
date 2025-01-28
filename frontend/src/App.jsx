@@ -10,6 +10,7 @@ import HistoryPage from './pages/history.jsx';
 import AddItemPage from './pages/add-items.jsx';
 import MyItemsPage from './pages/my-items.jsx';
 import ItemPage from './pages/item.jsx';
+import SupportPage from './pages/support.jsx';
 import axios from 'axios';
 
 axios.defaults.baseURL = 'http://localhost:3000';
@@ -29,7 +30,7 @@ function App() {
     <Route path='/my-items/add-item' element = {<AddItemPage />} />
     <Route path='/my-items' element = {<MyItemsPage />} />
     <Route path="/search/item/:id" element={<ItemPage />} />
-
+    <Route path="/support" element={<SupportPage />} />
     {/* <Route path="/items" element={<SearchItems />} /> */}
     {/* <Route path="/items/:id" element={<ItemPage />} /> */}
   </Routes>

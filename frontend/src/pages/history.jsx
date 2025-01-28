@@ -8,6 +8,7 @@ export default function HistoryPage() {
     const { user } = useContext(UserContext);
     const [orders, setOrders] = useState([]);
     const [otpMap, setOtpMap] = useState({});
+    const [mode, setMode] = useState("pending");
 
     async function handleGenerateOTP(orderId, sellerEmail) {
         try {
@@ -28,12 +29,12 @@ export default function HistoryPage() {
         if (user) {
             fetchOrders();
         }
-    }, [user]);
+    }, [user, mode]);
 
     async function fetchOrders() {
         try {
             const { data } = await axios.get("/orders/history", {
-                params: { email: user.email },
+                params: { email: user.email, mode },
             });
             setOrders(data);
         } catch (err) {
@@ -41,22 +42,56 @@ export default function HistoryPage() {
         }
     }
 
+    let OrderStatus = "";
+    if (mode === "pending") {
+        OrderStatus = "Pending Orders";
+    } else if (mode === "Bought") {
+        OrderStatus = "Items I bought";
+    } else {
+        OrderStatus = "Items I sold";
+    }
+
     return (
         <>
             <Header />
-            <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-6">
-                <h1 className="text-2xl font-bold text-blue-900 mb-4">Order History</h1>
+            <div className="flex justify-center items-center mt-6">
+                <button
+                    onClick={() => setMode("pending")}
+                    className={`px-4 py-2 rounded-md shadow-md mx-2 transition-all duration-300 ${
+                        mode === "pending" ? "bg-blue-900 shadow-lg shadow-gray-600 text-white text-lg" : "bg-gray-200 text-md"
+                        }`}
+                >   Pending
+                </button>
+                <button
+                    onClick={() => setMode("Bought")}
+                    className={`px-4 py-2 rounded-md shadow-md mx-2 transition-all duration-300 ${
+                        mode === "Bought" ? "bg-blue-900 shadow-lg shadow-gray-600 text-white text-lg" : "bg-gray-200 text-md"
+                        }`}
+                >   Bought
+                </button>
+                <button
+                    onClick={() => setMode("Sold")}
+                    className={`px-4 py-2 rounded-md mx-2 transition-all duration-300 ${
+                        mode === "Sold" ? "bg-blue-900 shadow-lg shadow-gray-600 text-white text-lg" : "bg-gray-200 text-md"
+                        }`}
+                >   Sold
+                </button>
+            </div>
+            <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-6 transition-all duration-300">
+                <h1 className="text-2xl font-bold text-blue-900 mb-4">{OrderStatus}</h1>
                 {orders.map((order) => (
                     <div
                         key={order._id}
-                        className="p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-gray-50"
+                        className="p-4 mb-4 border border-gray-300 rounded-lg shadow-sm bg-gray-50 transition-all duration-300"
                     >
-                        <button
-                            onClick={() => handleGenerateOTP(order._id, order.sellerEmail)}
-                            className="bg-blue-900 mb-2 text-white px-3 py-2 rounded-md shadow-md mt-2 hover:bg-blue-800 transition"
-                        >
-                            Generate / Regenerate OTP
-                        </button>
+                        {mode === "pending" && (
+                            <button
+                                onClick={() => handleGenerateOTP(order._id, order.sellerEmail)}
+                                className="bg-blue-900 mb-2 text-white px-3 py-2 rounded-md shadow-md hover:bg-blue-800 transition-all duration-300"
+                            >
+                                Generate / Regenerate OTP
+                            </button>
+                        )}
                         {otpMap[order._id] && (
                             <p className="text-md font-semibold text-blue-700">
                                 Last Generated OTP: {otpMap[order._id]}
@@ -70,7 +105,7 @@ export default function HistoryPage() {
                             className={`text-md mb-2 font-semibold ${order.status === "Pending" ? "text-red-500" : "text-green-500"
                                 }`}
                         >
-                            {order.status}
+                            {mode === "pending" ? "Pending" : mode}
                         </p>
                         <p className="text-lg mb-2 font-semibold">Item Details:</p>
                         <table className="w-full mb-4 border-collapse table-auto border border-gray-300 rounded-lg">
