@@ -1,9 +1,8 @@
 import Header from "../Header.jsx";
 import { Link, Navigate } from 'react-router-dom';
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { UserContext } from '../UserContext.jsx';
-import { useContext } from 'react'; 
 import ReCAPTCHA from "react-google-recaptcha";
 
 export default function LoginPage() {
@@ -13,13 +12,22 @@ export default function LoginPage() {
     const { setUser } = useContext(UserContext);
     const [recaptchaToken, setRecaptchaToken] = useState('');
 
+    const onRecaptchaChange = (token) => {
+        setRecaptchaToken(token);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
+        // Ensure recaptcha token exists before submission.
+        if (!recaptchaToken) {
+            alert("Please complete the reCAPTCHA");
+            return;
+        }
         
         try{
-            const { data } = await axios.post('/login', {email, password});  
+            // Include recaptchaToken in the login request payload.
+            const { data } = await axios.post('/login', { email, password, recaptchaToken });  
             setUser(data.user);
-            console.log('data after login',data);
             alert('Login successful!');
             setRedirect(true);
         } catch (e) {
@@ -28,9 +36,9 @@ export default function LoginPage() {
         }
     } 
 
-    // const onRecaptchaChange = (token) => {
-    //     setRecaptchaToken(token);
-    // };
+    const handleCASLogin = () => {
+        window.location.href = 'http://localhost:3000/cas-login';
+    };
 
     if(redirect){
         return <Navigate to={'/search'} />
@@ -45,8 +53,13 @@ export default function LoginPage() {
                     <form className="flex flex-col space-y-3" onSubmit={handleSubmit}>
                         <input type="email" placeholder="Email" value={email} onChange={event=>setEmail(event.target.value)} />
                         <input type="password" placeholder="Password" value={password} onChange={event=>setPassword(event.target.value)}/>
-                        {/* <ReCAPTCHA sitekey="6LdaesUqAAAAAOaFBe6APsTSAvc2acFv2sOvQcrg" onChange={onRecaptchaChange} /> */}
+                        <ReCAPTCHA 
+                            sitekey="6LdaesUqAAAAAOaFBe6APsTSAvc2acFv2sOvQcrg" 
+                            onChange={onRecaptchaChange} 
+                            className="mt-2 flex justify-center"
+                        />
                         <button type="submit">Login</button>
+                        <button onClick={handleCASLogin}>Login with CAS</button>
                     </form>
                     <div className="text-center text-sm py-2">
                         Don't have an account yet? <Link to={'/register'} className="underline text-blue-900">Register</Link>

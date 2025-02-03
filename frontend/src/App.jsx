@@ -11,6 +11,7 @@ import AddItemPage from './pages/add-items.jsx';
 import MyItemsPage from './pages/my-items.jsx';
 import ItemPage from './pages/item.jsx';
 import SupportPage from './pages/support.jsx';
+import RegisterCAS from './pages/RegisterCAS.jsx'; // Ensure this is imported only once
 import axios from 'axios';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import { UserContextProvider } from './UserContext.jsx';
@@ -21,67 +22,70 @@ axios.defaults.withCredentials = true;
 function App() {
   return (
     <UserContextProvider>
-      <Routes>
-        <Route path='/' element={<LoginPage />} />
-        <Route path='/login' element={<LoginPage />} />
-        <Route path='/register' element={<RegisterPage />} />
+      <Router>
+        <Routes>
+          <Route path='/' element={<LoginPage />} />
+          <Route path='/login' element={<LoginPage />} />
+          <Route path='/register' element={<RegisterPage />} />
+          <Route path='/register-cas' element={<RegisterCAS />} />
 
-        <Route path='/dashboard' element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
+          <Route path='/dashboard' element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/search' element={
-          <ProtectedRoute>
-            <SearchPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/search' element={
+            <ProtectedRoute>
+              <SearchPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/deliver' element={
-          <ProtectedRoute>
-            <DeliverPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/deliver' element={
+            <ProtectedRoute>
+              <DeliverPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/cart' element={
-          <ProtectedRoute>
-            <CartPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/cart' element={
+            <ProtectedRoute>
+              <CartPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/history' element={
-          <ProtectedRoute>
-            <HistoryPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/history' element={
+            <ProtectedRoute>
+              <HistoryPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/my-items/add-item' element={
-          <ProtectedRoute>
-            <AddItemPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/my-items/add-item' element={
+            <ProtectedRoute>
+              <AddItemPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path='/my-items' element={
-          <ProtectedRoute>
-            <MyItemsPage />
-          </ProtectedRoute>
-        } />
+          <Route path='/my-items' element={
+            <ProtectedRoute>
+              <MyItemsPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path="/search/item/:id" element={
-          <ProtectedRoute>
-            <ItemPage />
-          </ProtectedRoute>
-        } />
+          <Route path="/search/item/:id" element={
+            <ProtectedRoute>
+              <ItemPage />
+            </ProtectedRoute>
+          } />
 
-        <Route path="/support" element={
-          <ProtectedRoute>
-            <SupportPage />
-          </ProtectedRoute>
-        } />
-      </Routes>
+          <Route path="/support" element={
+            <ProtectedRoute>
+              <SupportPage />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
     </UserContextProvider>
   );
 }
 
-export default App
+export default App;

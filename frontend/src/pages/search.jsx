@@ -149,22 +149,22 @@ export default function SearchPage() {
                     </div>
 
                     {/* Vendor Filter */}
-                    <h2 className="text-xl font-bold text-blue-900 mb-2">Filter by Vendor</h2>
-                    <select
-                        value={selectedVendor}
-                        onChange={(e) => setSelectedVendor(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-2 py-1"
-                    >
-                        <option value=''>All Vendors</option>
-                        {vendors.map((vendor) => (
-                            <option
-                            key={vendor._id}
-                            value={vendor.firstName + " " + vendor.lastName}
-                          >
-                            {vendor.firstName} {vendor.lastName}
-                          </option>
-                        ))}
-                    </select>
+                        {/* <h2 className="text-xl font-bold text-blue-900 mb-2">Filter by Vendor</h2>
+                        <select
+                            value={selectedVendor}
+                            onChange={(e) => setSelectedVendor(e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-2 py-1"
+                        >
+                            <option value=''>All Vendors</option>
+                            {vendors.map((vendor) => (
+                                <option
+                                key={vendor._id}
+                                value={vendor.firstName + " " + vendor.lastName}
+                            >
+                                {vendor.firstName} {vendor.lastName}
+                            </option>
+                            ))}
+                        </select> */}
                 </div>
 
                 {/* Item Grid */}
