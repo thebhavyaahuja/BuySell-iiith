@@ -93,6 +93,26 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.get('/profile', async (req, res) => {
+    try {
+        const token = req.cookies.token;
+        if (!token) return res.status(401).json('No token');
+        const { id } = jwt.verify(token, JWT_Secret);
+        const userDoc = await User.findById(id);
+        if (!userDoc) return res.status(404).json('User not found');
+        res.json({  
+            _id: userDoc._id,
+            email: userDoc.email,
+            firstName: userDoc.firstName,
+            lastName: userDoc.lastName,
+            age: userDoc.age,
+            contactNo: userDoc.contactNo,
+        });
+    } catch (e) {
+        res.status(401).json('Invalid token');
+    }
+});
+
 app.put('/update-user', async (req, res) => {
     try {
         const {
@@ -179,7 +199,6 @@ app.get('/search', async (req, res) => {
         const { email } = req.query; // Get the email from query parameters
         // if email matches, then dont show the item
         const items = await Item.find({ sellerEmail: { $ne: email } });
-        console.log(items); 
         return res.status(200).json(items);
     } catch (err) {
         return res.status(400).json({ message: err.message });
@@ -446,6 +465,75 @@ app.put('/my-items/remove', async (req, res) => {
         // }
 
         return res.status(200).json({ message: 'Item removed' });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+app.get('/users/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const userDoc = await User.findOne({ email });
+        if (!userDoc) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        return res.status(200).json({
+            email: userDoc.email,
+            firstName: userDoc.firstName,
+            lastName: userDoc.lastName,
+            sellerRating: userDoc.sellerRating,
+            ratingCount: userDoc.ratingCount
+        });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
+
+// Updates or creates a new rating from a specific user for the vendor
+app.put('/users/update-rating', async (req, res) => {
+    try {
+        const { vendorEmail, raterEmail, newRating } = req.body;
+        if (!vendorEmail || !raterEmail) {
+            return res.status(400).json({ message: 'Missing emails' });
+        }
+        if (!newRating || newRating < 1 || newRating > 5) {
+            return res.status(400).json({ message: 'Invalid rating. Must be 1–5.' });
+        }
+
+        // Find the vendor document
+        const vendorDoc = await User.findOne({ email: vendorEmail });
+        if (!vendorDoc) {
+            return res.status(404).json({ message: 'Vendor not found' });
+        }
+
+        // Check if the rater has rated before
+        const existingRating = vendorDoc.ratings.find(
+            (r) => r.userEmail === raterEmail
+        );
+
+        if (existingRating) {
+            // Update previous rating
+            existingRating.ratingValue = newRating;
+        } else {
+            // Push a new rating
+            vendorDoc.ratings.push({ userEmail: raterEmail, ratingValue: newRating });
+        }
+
+        // Recount ratingCount
+        vendorDoc.ratingCount = vendorDoc.ratings.length;
+
+        // Recalculate average
+        const sum = vendorDoc.ratings.reduce((acc, curr) => acc + curr.ratingValue, 0);
+        vendorDoc.sellerRating = sum / vendorDoc.ratingCount;
+
+        // Save changes
+        const updated = await vendorDoc.save();
+
+        return res.status(200).json({
+            message: 'Rating updated successfully',
+            sellerRating: updated.sellerRating,
+            ratingCount: updated.ratingCount
+        });
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }
