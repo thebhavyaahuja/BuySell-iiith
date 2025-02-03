@@ -11,6 +11,41 @@ const Order = require('./models/Order');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
+const session = require('express-session');
+const CASAuthentication = require('cas-authentication');
+const axios = require('axios'); 
+
+app.use (session({
+    secret:'some-secret-string',
+    resave:false,
+    saveUninitialized:true
+}));
+
+var cas = new CASAuthentication({
+    cas_url     : 'https://login.iiit.ac.in/cas',
+    service_url : 'http://localhost:3000',
+    cas_version: '2.0',
+    renew: false,
+    destroy_session: false,
+    session_info: 'user'
+});
+
+app.get('/cas-login', cas.bounce, async function(req, res) {
+    const email = req.session['cas_user'];
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        // Redirect to CAS registration page if user does not exist
+        return res.redirect(`http://localhost:5173/register-cas?email=${email}`);
+    }
+
+    // Generate token and redirect to search page
+    const storeName = "Buy Sell @ iiith";
+    const userStoreContext = `You are a helpful bot for user ${user.firstName} ${user.lastName}, owner of ${storeName}. Provide helpful info related to their store products upon request. If user asks what to do, tell him, in this store he can Buy order from Search Tab, sell his own items and track history and pending orders.`;
+    const token = jwt.sign({ id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, storeContext: userStoreContext }, JWT_Secret);
+
+    res.cookie('token', token).redirect('/search');
+});
 
 const SecretStuff = bcrypt.genSaltSync(10);
 const JWT_Secret = process.env.JWT_SECRET || 'your_jwt_secret';
@@ -48,30 +83,27 @@ app.post('/register', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        console.log('req.body', req.body);
+        const { email, password, recaptchaToken } = req.body;
+        
+        // If recaptchaToken is provided, verify it with Google using your secret key
+        if (!recaptchaToken) {
+            return res.status(400).json({ error: 'Missing recaptcha token' });
+        }
+        const SECRET_RECAPTCHA = process.env.RECAPTCHA_SECRET_KEY; // set in .env
+        const captchaRes = await axios.post(
+            `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_RECAPTCHA}&response=${recaptchaToken}`
+        );
+        if (!captchaRes.data.success) {
+            return res.status(400).json({ error: 'Captcha verification failed' });
+        }
 
-        // // Verifying the captcha token
-        // const SECRET_KEY = "6LdaesUqAAAAAM3HA0RHfRxZ1MzP7kDx7oeuLP-V";
-        // console.log('captchaToken', captchaToken);
-        // console.log('SECRET_KEY', SECRET_KEY);
-        // const captchaRes = await axios.post(
-        //     `https://www.google.com/recaptcha/api/siteverify?secret=${SECRET_KEY}&response=${captchaToken}`, 
-        //     {},
-        //     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-        // );
-        // console.log('captchaRes', captchaRes.data);
-        // if (!captchaRes.data.success) {
-        //     return res.status(400).json({ error: 'Captcha verification failed' });
-        // }
-
+        // Proceed to manual login
         const userDoc = await User.findOne({ email });
         if (userDoc && bcrypt.compareSync(password, userDoc.password)) {
             const storeName = "Buy Sell @ iiith";
-            const userStoreContext = `You are a helpful bot for user ${userDoc.firstName} ${userDoc.lastName}, owner of ${storeName}. Provide helpful info related to their store products upon request. If user asks what to do, tell him, in this store he can Buy order from Search Tab, sell his own items and track history and pending orders.`;
+            const userStoreContext = `You are a helpful bot for user ${userDoc.firstName} ${userDoc.lastName}, owner of ${storeName}. Provide helpful info related to their store products upon request. If user asks what to do, tell him, in this store he can Buy order from Search Tab, sell his own items by creating in My Items tab, then waiting for someone to request it   and then finishing the requested order at Deliver tab by coordinating an OTP from both ends and track history on History tab`;
             const token = jwt.sign({ id: userDoc._id, email: userDoc.email, firstName: userDoc.firstName, lastName: userDoc.lastName, storeContext: userStoreContext }, JWT_Secret, {}, (err, token) => {
                 if (err) throw err;
-                // res.cookie('token',token).json('pass ok');
                 return res.cookie('token', token).status(200).json({
                     token,
                     user: {
@@ -543,5 +575,14 @@ app.post('/logout', (req, res) => {
     res.clearCookie('token').json('Logged out');
 });
 
+app.post('/register-cas', async (req, res) => {
+    try {
+        const { email, firstName, lastName, age, contactNo } = req.body;
+        const user = await User.findOrCreateCASUser(email, firstName, lastName, age, contactNo);
+        return res.status(201).json(user);
+    } catch (err) {
+        return res.status(400).json(err);
+    }
+});
 
 app.listen(3000);
