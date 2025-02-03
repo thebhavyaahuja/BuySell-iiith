@@ -223,8 +223,8 @@ app.post('/cart/add', async (req, res) => {
         const { itemId, name, userEmail, sellerEmail, price, sellerName, description, category } = req.body;
         // Add item to cart
         console.log('itemId', itemId);
-        // check if item already exists in cart
-        const itemInCart = await Cart.findOne({ itemId });
+        // check if item already exists in cart with the same userEmail
+        const itemInCart = await Cart.findOne({ itemId, userEmail });
         if (itemInCart) {
             return res.status(400).json({ message: 'Item already in cart' });
         }
