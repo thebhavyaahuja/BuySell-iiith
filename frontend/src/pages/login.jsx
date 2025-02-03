@@ -38,7 +38,7 @@ export default function LoginPage() {
 
     return (
         <>
-            <Header/>
+            <div className="flex justify-center mt-20 text-blue-950 text-4xl font-bold">Buy Sell @ iiith</div>
             <div className="flex items-center justify-center p-12">
                 <div className="bg-gray-50 px-6 py-2 rounded-lg shadow-lg shadow-gray-400 max-w-md w-full">
                     <h1 className="text-3xl mb-4 font-bold text-center text-gray-800">Login</h1>

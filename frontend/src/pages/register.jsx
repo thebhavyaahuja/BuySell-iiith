@@ -2,6 +2,7 @@ import Header from "../Header.jsx";
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
     const [firstName, setFirstName] = useState('');
@@ -11,6 +12,7 @@ export default function RegisterPage() {
     const [contactNo, setContactNo] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
     const registerUser = async (event) => {
         event.preventDefault();
@@ -24,6 +26,7 @@ export default function RegisterPage() {
                 password: password
             });
             alert('You\'ve registered successfully! Please login to continue.');
+            navigate('/login');
         } catch (e) {
             if (e.response && e.response.data && e.response.data.errors) {
                 console.log(e.response.data.errors.email.message);
@@ -42,7 +45,7 @@ export default function RegisterPage() {
     };
     return (
         <>
-            <Header/>
+            <div className="flex justify-center mt-10 mb-10 text-blue-950 text-4xl font-bold">Buy Sell @ iiith</div>
             <div className="flex items-center justify-center p-3">
                 <div className="bg-gray-50 px-6 py-2 rounded-lg shadow-lg shadow-gray-400 max-w-md w-full">
                     <h1 className="text-3xl mb-4 font-bold text-center text-gray-800">Register</h1>

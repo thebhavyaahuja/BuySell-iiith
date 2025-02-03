@@ -15,9 +15,10 @@ export default function Support() {
         setInput('');
         
         try {
-            const { data } = await axios.post('/chatbot', {
-                messages: [...messages, userMsg],
-            });
+            const { data } = await axios.post('/chatbot', 
+                {messages: [...messages, userMsg]},
+                { withCredentials: true }
+            );
             // data.reply represents AI response
             setMessages([...messages, userMsg, { role: 'assistant', content: data.reply }]);
         } catch (error) {

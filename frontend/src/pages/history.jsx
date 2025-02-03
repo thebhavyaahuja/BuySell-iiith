@@ -77,7 +77,7 @@ export default function HistoryPage() {
                 >   Sold
                 </button>
             </div>
-            <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg mt-6 transition-all duration-300">
+            <div className="max-w-3xl mb-10 mx-auto p-6 bg-white rounded-lg shadow-lg mt-6 transition-all duration-300">
                 <h1 className="text-2xl font-bold text-blue-900 mb-4">{OrderStatus}</h1>
                 {orders.map((order) => (
                     <div

@@ -22,7 +22,7 @@ export default function Header() {
 
     return (
         <>
-            <header className="bg-gray-300 p-4 flex items-center shadow-lg">
+            <header className="bg-gray-200 p-4 flex items-center shadow-lg">
                 <img src={logo} className="h-14" alt="logo" />
                 <h1 className="text-2xl font-bold text-blue-900 ml-10">Buy Sell @iiith</h1>
                 <nav className="ml-14 flex space-x-6">

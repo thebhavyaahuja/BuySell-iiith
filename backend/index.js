@@ -14,6 +14,8 @@ const router = express.Router();
 
 const SecretStuff = bcrypt.genSaltSync(10);
 const JWT_Secret = process.env.JWT_SECRET || 'your_jwt_secret';
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 app.use(express.json());
 app.use(cors({
@@ -63,10 +65,11 @@ app.post('/login', async (req, res) => {
         //     return res.status(400).json({ error: 'Captcha verification failed' });
         // }
 
-
         const userDoc = await User.findOne({ email });
         if (userDoc && bcrypt.compareSync(password, userDoc.password)) {
-            const token = jwt.sign({ id: userDoc._id, email: userDoc.email, firstName: userDoc.firstName, lastName: userDoc.lastName }, JWT_Secret, {}, (err, token) => {
+            const storeName = "Buy Sell @ iiith";
+            const userStoreContext = `You are a helpful bot for user ${userDoc.firstName} ${userDoc.lastName}, owner of ${storeName}. Provide helpful info related to their store products upon request. If user asks what to do, tell him, in this store he can Buy order from Search Tab, sell his own items and track history and pending orders.`;
+            const token = jwt.sign({ id: userDoc._id, email: userDoc.email, firstName: userDoc.firstName, lastName: userDoc.lastName, storeContext: userStoreContext }, JWT_Secret, {}, (err, token) => {
                 if (err) throw err;
                 // res.cookie('token',token).json('pass ok');
                 return res.cookie('token', token).status(200).json({
@@ -78,7 +81,7 @@ app.post('/login', async (req, res) => {
                         lastName: userDoc.lastName,
                         age: userDoc.age,
                         contactNo: userDoc.contactNo,
-                        password: userDoc.password
+                        password: userDoc.password,
                     }
                 })
             });
@@ -176,6 +179,7 @@ app.get('/search', async (req, res) => {
         const { email } = req.query; // Get the email from query parameters
         // if email matches, then dont show the item
         const items = await Item.find({ sellerEmail: { $ne: email } });
+        console.log(items); 
         return res.status(200).json(items);
     } catch (err) {
         return res.status(400).json({ message: err.message });
@@ -206,6 +210,13 @@ app.post('/cart/add', async (req, res) => {
             return res.status(400).json({ message: 'Item already in cart' });
         }
         const cartDoc = await Cart.create({ itemId, name, userEmail, price, sellerEmail, sellerName, description, category });
+
+        // // added to store context
+        // await StoreContext.findOneAndUpdate(
+        //     { userId: userDoc._id },
+        //     { $push: { events: `Added item to cart: ${name} ($${price})` } },
+        //     { upsert: true, new: true }
+        // );
         return res.status(201).json(cartDoc);
     } catch (err) {
         return res.status(400).json({ message: err.message });
@@ -227,7 +238,9 @@ app.put('/cart/remove', async (req, res) => {
         const { itemId } = req.body;
         console.log('itemId', itemId);
         await Cart.deleteOne({ itemId });
+
         return res.status(200).json({ message: 'Item removed from cart' });
+        // store context
     } catch (err) {
         return res.status(400).json({ message: err.message });
     }
@@ -387,21 +400,56 @@ app.put('/orders/mark-delivered', async (req, res) => {
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 app.post('/chatbot', async (req, res) => {
-    try{
-        // console.log('req.body', req.body);
+    try {
+        let storeContext = '';
+        const token = req.cookies.token;
+        if (token) {
+            const userData = jwt.verify(token, JWT_Secret);
+            storeContext = userData.storeContext;
+        }
+        const { messages } = req.body;
+        const storeContextString = storeContext ? `Store Context: ${storeContext}` : '';
+        const userMessages = messages.map(msg => `${msg.role}: ${msg.content}`).join("\n");
+        const finalPrompt = `${storeContext}\n${storeContextString}\n${userMessages}`;
+
+        // Gemini call
         const genAI = new GoogleGenerativeAI("AIzaSyDAiq7Kj6LHr3vrYS7AAt3_MxI5e1JxHTY");
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const { messages } = req.body;
-        const prompt = messages.map(msg => `${msg.role}: ${msg.content}`).join("\n");
+        const result = await model.generateContent(finalPrompt);
 
-        const result = await model.generateContent(prompt);
-        // console.log(result.response.text());
         return res.status(200).json({ reply: result.response.text() });
     } catch (err) {
         console.log(err);
         return res.status(400).json({ message: err.message });
     }
-}); 
+});
+
+app.put('/my-items/remove', async (req, res) => {
+    try {
+        const { itemId } = req.body;
+        const item = await Item.findById(itemId);
+        if (!item) {
+            return res.status(404).json({ message: 'Item not found' });
+        }
+
+        // Remove the item
+        await Item.deleteOne({ _id: itemId });
+
+        // Update StoreContext for the user
+        const userDoc = await User.findOne({ email: item.sellerEmail });
+        // if (userDoc) {
+        //     await StoreContext.findOneAndUpdate(
+        //         { userId: userDoc._id },
+        //         { $push: { events: `Removed item: ${item.name}` } },
+        //         { upsert: true, new: true }
+        //     );
+        // }
+
+        return res.status(200).json({ message: 'Item removed' });
+    } catch (err) {
+        return res.status(400).json({ message: err.message });
+    }
+});
 
 app.post('/logout', (req, res) => {
     res.clearCookie('token').json('Logged out');

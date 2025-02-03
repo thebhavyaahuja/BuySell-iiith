@@ -69,7 +69,7 @@ export default function CartPage() {
         <>
             <Header />
             <div className="flex items-center p-4">
-                <h1 className="ml-40 mr-10 w-200 text-2xl text-blue-950 font-bold">
+                <h1 className="ml-40 mr-10 w-200 text-2xl text-blue-900 font-bold">
                     My Cart
                 </h1>
                 <input
@@ -97,15 +97,15 @@ export default function CartPage() {
                     </div>
                 ))}
             </div>
-            <div className="px-25 py-10 fixed bottom-4 right-90">
+            <div className="px-25 py-10 fixed bottom-0 right-130">
                 <button
                     onClick={handlePlaceOrder}
-                    className="text-lg bg-blue-900 text-white px-8 py-3 rounded-md shadow-lg hover:bg-blue-800 transition duration-300"
+                    className="text-lg bg-blue-900 mb-8 cursor-pointer rounded-full text-white px-8 py-3 rounded-full shadow-md shadow-blue-950 hover:bg-blue-800 transition duration-300"
                 >
                     Place Order
                 </button>
             </div>
-            <div className="px-3 py-2 mb-10 mr-15 fixed bottom-4 right-4 bg-blue-950 text-white rounded-full shadow-md shadow-blue-950">
+            <div className="text-lg px-5 py-4 mb-10 mr-15 fixed bottom-4 right-4 bg-blue-950 hover:bg-blue-900 transition duration-300 text-white rounded-full shadow-md shadow-blue-950">
                 Cart Value : Rs. {items.reduce((acc, item) => acc + item.price, 0)}
             </div>
         </>
